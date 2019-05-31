@@ -9,12 +9,12 @@ import com.alipay.api.request.AlipayUserUserinfoShareRequest;
 import com.alipay.api.response.AlipaySystemOauthTokenResponse;
 import com.alipay.api.response.AlipayUserUserinfoShareResponse;
 import com.github.lany192.pay.alipay.config.AlipayProperties;
-import com.github.lany192.pay.alipay.enums.AlipayAuthErrorCode;
-import com.github.lany192.pay.alipay.exception.AlipayException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Date;
 import java.util.HashMap;
@@ -22,50 +22,44 @@ import java.util.Map;
 
 /**
  * 支付宝用户认证相关Service
+ *
  * @author Administrator
  */
+@Slf4j
+@Service
 public class AlipayAuthService {
+    private final AlipayProperties properties;
+    private final AlipayClient alipayClient;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AlipayTradeService.class);
-
-    private AlipayProperties properties;
-
-    private AlipayClient alipayClient;
-
+    @Autowired
     public AlipayAuthService(AlipayProperties properties, AlipayClient alipayClient) {
         this.properties = properties;
         this.alipayClient = alipayClient;
     }
 
-    public void setProperties(AlipayProperties properties) {
-        this.properties = properties;
+    public AlipayProperties getProperties() {
+        return properties;
     }
 
     /**
      * 根据authCode获得AccessToken
-     * @param authCode authCode
+     *
+     * @param authCode     authCode
      * @param alipayUserId alipayUserId
      * @return AccessToken
      */
-    public String userAuth(String authCode, String alipayUserId) {
+    public String userAuth(String authCode, String alipayUserId) throws AlipayApiException {
         //创建API对应的request类
         AlipaySystemOauthTokenRequest request = new AlipaySystemOauthTokenRequest();
         request.setGrantType("authorization_code");
         request.setCode(authCode);
         //通过alipayClient调用API，获得对应的response类
-        AlipaySystemOauthTokenResponse response = null;
-        try {
-            response = alipayClient.execute(request);
-        } catch (AlipayApiException e) {
-            e.printStackTrace();
-            throw new AlipayException(504, AlipayAuthErrorCode.ACCESS_TOKEN_ERROR.getId(),
-                    AlipayAuthErrorCode.ACCESS_TOKEN_ERROR.getMsg());
-        }
+        AlipaySystemOauthTokenResponse response = alipayClient.execute(request);
         //根据response中的结果继续业务逻辑处理
-        if(response == null) {
+        if (response == null) {
             return "";
         }
-        if(!response.getUserId().equals(alipayUserId)) {
+        if (!response.getUserId().equals(alipayUserId)) {
             return "";
         }
         return response.getAccessToken();
@@ -73,29 +67,23 @@ public class AlipayAuthService {
 
     /**
      * 使用accessToken获取用户信息
+     *
      * @param accessToken token
      * @return AlipayUserUserinfoShareResponse
      */
-    public AlipayUserUserinfoShareResponse getAlipayUserInfo(String accessToken) {
+    public AlipayUserUserinfoShareResponse getAlipayUserInfo(String accessToken) throws AlipayApiException {
         //实例化具体API对应的request类,类名称和接口名称对应,当前调用接口名称：alipay.user.userinfo.share
         AlipayUserUserinfoShareRequest request = new AlipayUserUserinfoShareRequest();
-
         //授权类接口执行API调用时需要带上accessToken
-        AlipayUserUserinfoShareResponse response = null;
-        try {
-            response = alipayClient.execute(request, accessToken);
-        } catch (AlipayApiException e) {
-            LOGGER.error("支付宝-使用accessToken获取用户信息失败", e);
-            e.printStackTrace();
-        }
-        return response;
+        return alipayClient.execute(request, accessToken);
     }
 
     /**
      * 支付宝授权加签
+     *
      * @return 签名后字符串
      */
-    public String rsaSign() {
+    public String rsaSign() throws AlipayApiException {
         Map<String, String> params = new HashMap<>();
         // 服务接口名称， 固定值
         params.put("apiname", "com.alipay.account.auth");
@@ -118,25 +106,24 @@ public class AlipayAuthService {
         // 签名类型
         params.put("sign_type", AlipayConstants.SIGN_TYPE_RSA2);
 
+        byte[] privateKeyBytes = properties.getPrivateKey().getEncoded();
+        String sign = AlipaySignature.rsaSign(AlipaySignature.getSignContent(params), Base64.encodeBase64String(privateKeyBytes),
+                AlipayConstants.CHARSET_UTF8, AlipayConstants.SIGN_TYPE_RSA2);
         try {
-            byte[] privateKeyBytes = properties.getPrivateKey().getEncoded();
-            String sign = AlipaySignature.rsaSign(AlipaySignature.getSignContent(params), Base64.encodeBase64String(privateKeyBytes),
-                    AlipayConstants.CHARSET_UTF8, AlipayConstants.SIGN_TYPE_RSA2);
-            return AlipaySignature.getSignContent(params)+"&sign="+ URLEncoder.encode(sign, "UTF-8");
-        } catch (Exception e) {
-            LOGGER.error("授权签名失败", e);
-            throw new AlipayException("授权签名失败");
+            return AlipaySignature.getSignContent(params) + "&sign=" + URLEncoder.encode(sign, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         }
+        return "";
     }
 
     public boolean rsaCheckV1(Map<String, String> params) {
-
         byte[] alipaypublicKey = properties.getAlipayPublicKey().getEncoded();
         try {
             return AlipaySignature.rsaCheckV1(params, Base64.encodeBase64String(alipaypublicKey),
                     AlipayConstants.CHARSET_UTF8, AlipayConstants.SIGN_TYPE_RSA2);
         } catch (AlipayApiException e) {
-            LOGGER.error("异步返回结果验签失败", e);
+            log.error("异步返回结果验签失败", e);
         }
         return false;
     }

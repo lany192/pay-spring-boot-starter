@@ -2,6 +2,8 @@ package com.github.lany192.pay.alipay.config;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
@@ -50,5 +52,10 @@ public class AlipayProperties {
             JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter();
             this.alipayPublicKey = keyConverter.getPublicKey(subjectPublicKeyInfo);
         }
+    }
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
     }
 }

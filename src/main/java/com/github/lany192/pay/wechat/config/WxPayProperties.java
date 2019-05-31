@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Setter
 @Getter
-@ConfigurationProperties(prefix = "wechat.pay")
+@ConfigurationProperties(prefix = "pay.wxpay")
 public class WxPayProperties {
     /**
      * 设置微信公众号的appid

@@ -1,9 +1,14 @@
 package com.github.lany192.pay.wechat.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * @author Lany
  * @date 2018/3/29
  */
+@Setter
+@Getter
 public class WxPayGoodsDetail {
 
     /**
@@ -30,56 +35,5 @@ public class WxPayGoodsDetail {
      * 必填 商品单价，单位为分
      */
     private Integer price;
-
-    public String getGoodsId() {
-        return goodsId;
-    }
-
-    public void setGoodsId(String goodsId) {
-        this.goodsId = goodsId;
-    }
-
-    public String getWxpayGoodsId() {
-        return wxpayGoodsId;
-    }
-
-    public void setWxpayGoodsId(String wxpayGoodsId) {
-        this.wxpayGoodsId = wxpayGoodsId;
-    }
-
-    public String getGoodsName() {
-        return goodsName;
-    }
-
-    public void setGoodsName(String goodsName) {
-        this.goodsName = goodsName;
-    }
-
-    public Integer getGoodsNum() {
-        return goodsNum;
-    }
-
-    public void setGoodsNum(Integer goodsNum) {
-        this.goodsNum = goodsNum;
-    }
-
-    public Integer getPrice() {
-        return price;
-    }
-
-    public void setPrice(Integer price) {
-        this.price = price;
-    }
-
-    @Override
-    public String toString() {
-        return "{" +
-                "goodsId='" + goodsId + '\'' +
-                ", wxpayGoodsId='" + wxpayGoodsId + '\'' +
-                ", goodsName='" + goodsName + '\'' +
-                ", goodsNum=" + goodsNum +
-                ", price=" + price +
-                '}';
-    }
 }
 

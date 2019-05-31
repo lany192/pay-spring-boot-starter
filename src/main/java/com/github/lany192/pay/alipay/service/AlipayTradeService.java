@@ -6,50 +6,48 @@ import com.alipay.api.domain.*;
 import com.alipay.api.request.*;
 import com.alipay.api.response.*;
 import com.github.lany192.pay.alipay.config.AlipayProperties;
-import com.github.lany192.pay.alipay.enums.AlipayTradeErrorCode;
-import com.github.lany192.pay.alipay.exception.AlipayException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
  * 支付宝交易Service
  */
+@Slf4j
+@Service
 public class AlipayTradeService {
+    private final AlipayProperties properties;
+    private final AlipayClient alipayClient;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AlipayTradeService.class);
-
-    private AlipayProperties properties;
-
-    private AlipayClient alipayClient;
-
-    public void setProperties(AlipayProperties properties) {
-        this.properties = properties;
-    }
-
+    @Autowired
     public AlipayTradeService(AlipayProperties properties, AlipayClient alipayClient) {
         this.properties = properties;
         this.alipayClient = alipayClient;
     }
 
+    public AlipayProperties getProperties() {
+        return properties;
+    }
+
     /**
      * 支付宝条码支付
+     *
      * @param tradePayModel AlipayTradePayModel
      * @return AlipayTradePayResponse
      */
     public AlipayTradePayResponse pay(AlipayTradePayModel tradePayModel) throws AlipayApiException {
-
         AlipayTradePayRequest request = new AlipayTradePayRequest(); //创建API对应的request类
         request.setBizModel(tradePayModel); //设置业务参数
-
         return alipayClient.execute(request);  //通过alipayClient调用API，获得对应的response类
     }
 
     /**
      * 交易查询
+     *
      * @param outTradeNo
      * @return
      */
-    public AlipayTradeQueryResponse queryByOutTradeNo(String outTradeNo) {
+    public AlipayTradeQueryResponse queryByOutTradeNo(String outTradeNo) throws AlipayApiException {
         AlipayTradeQueryModel request = new AlipayTradeQueryModel();
         request.setOutTradeNo(outTradeNo);
         return query(request);
@@ -57,10 +55,11 @@ public class AlipayTradeService {
 
     /**
      * 交易查询
+     *
      * @param tradeNo
      * @return
      */
-    public AlipayTradeQueryResponse queryByTradeNo(String tradeNo) {
+    public AlipayTradeQueryResponse queryByTradeNo(String tradeNo) throws AlipayApiException {
         AlipayTradeQueryModel request = new AlipayTradeQueryModel();
         request.setTradeNo(tradeNo);
         return query(request);
@@ -68,10 +67,11 @@ public class AlipayTradeService {
 
     /**
      * 转账查询
+     *
      * @param outBizNo 商户转账唯一订单号
      * @return
      */
-    public AlipayFundTransOrderQueryResponse queryByOutBizNo(String outBizNo) {
+    public AlipayFundTransOrderQueryResponse queryByOutBizNo(String outBizNo) throws AlipayApiException {
         AlipayFundTransOrderQueryModel request = new AlipayFundTransOrderQueryModel();
         request.setOutBizNo(outBizNo);
         return query(request);
@@ -79,10 +79,11 @@ public class AlipayTradeService {
 
     /**
      * 转账查询
+     *
      * @param orderId 支付宝转账单据号
      * @return
      */
-    public AlipayFundTransOrderQueryResponse queryByOrderId(String orderId) {
+    public AlipayFundTransOrderQueryResponse queryByOrderId(String orderId) throws AlipayApiException {
         AlipayFundTransOrderQueryModel request = new AlipayFundTransOrderQueryModel();
         request.setOrderId(orderId);
         return query(request);
@@ -90,42 +91,26 @@ public class AlipayTradeService {
 
     /**
      * 交易查询
+     *
      * @param tradeQueryModel
      * @return
      */
-    private AlipayTradeQueryResponse query(AlipayTradeQueryModel tradeQueryModel) {
-
+    private AlipayTradeQueryResponse query(AlipayTradeQueryModel tradeQueryModel) throws AlipayApiException {
         AlipayTradeQueryRequest request = new AlipayTradeQueryRequest();
         request.setBizModel(tradeQueryModel);
-        AlipayTradeQueryResponse response = null;
-        try {
-            response = alipayClient.execute(request);
-            LOGGER.info("支付宝订单支付查询返回： \n" + response.getBody());
-        } catch (AlipayApiException e) {
-            LOGGER.error("支付宝订单支付查询失败", e);
-            throw new AlipayException(AlipayTradeErrorCode.TRADE_QUERY_ERROR.getId(), "trade error");
-        }
-        return response;
+        return alipayClient.execute(request);
     }
 
     /**
      * 转账查询
+     *
      * @param alipayFundTransOrderQueryModel
      * @return
      */
-    private AlipayFundTransOrderQueryResponse query(AlipayFundTransOrderQueryModel alipayFundTransOrderQueryModel) {
-
+    private AlipayFundTransOrderQueryResponse query(AlipayFundTransOrderQueryModel alipayFundTransOrderQueryModel) throws AlipayApiException {
         AlipayFundTransOrderQueryRequest request = new AlipayFundTransOrderQueryRequest();
         request.setBizModel(alipayFundTransOrderQueryModel);
-        AlipayFundTransOrderQueryResponse response = null;
-        try {
-            response = alipayClient.execute(request);
-            LOGGER.info("支付宝转账结果查询返回： \n" + response.getBody());
-        } catch (AlipayApiException e) {
-            LOGGER.error("支付宝转账结果查询失败", e);
-            throw new AlipayException(AlipayTradeErrorCode.TRADE_QUERY_ERROR.getId(), "query error");
-        }
-        return response;
+        return alipayClient.execute(request);
     }
 
     public AlipayTradeCancelResponse cancelByOutTradeNo(String outTradeNo) {
@@ -147,7 +132,7 @@ public class AlipayTradeService {
         request.setBizModel(tradeCancel);
         AlipayTradeCancelResponse response = null;
         try {
-            response =  alipayClient.execute(request);
+            response = alipayClient.execute(request);
         } catch (AlipayApiException e) {
             e.printStackTrace();
         }
@@ -186,6 +171,7 @@ public class AlipayTradeService {
 
     /**
      * 下载账单
+     *
      * @param billDownloadurlQuery
      * @return AlipayDataDataserviceBillDownloadurlQueryResponse
      */
@@ -206,52 +192,30 @@ public class AlipayTradeService {
 
     /**
      * 支付宝转账到其他账户
+     *
      * @param transfer AlipayFundTransToAccountTransfer
      * @return 请求的响应
      */
-    public AlipayFundTransToaccountTransferResponse transferToAccount(AlipayFundTransToaccountTransferModel transfer) {
+    public AlipayFundTransToaccountTransferResponse transferToAccount(AlipayFundTransToaccountTransferModel transfer) throws AlipayApiException {
         AlipayFundTransToaccountTransferRequest request = new AlipayFundTransToaccountTransferRequest();
         request.setBizModel(transfer);
-        AlipayFundTransToaccountTransferResponse response = null;
-        try {
-            response = alipayClient.execute(request);
-        } catch (AlipayApiException e) {
-            e.printStackTrace();
-            throw new AlipayException(AlipayTradeErrorCode.TRADE_TRANSFER_ERROR.getId(), AlipayTradeErrorCode.TRADE_TRANSFER_ERROR.getMsg());
-        }
-        if(response.isSuccess()){
-            return response;
-        } else {
-            throw new AlipayException(500, Integer.valueOf(response.getCode()), response.getSubMsg());
-        }
+        return alipayClient.execute(request);
     }
 
     /**
      * App支付
+     *
      * @param request
      * @return
      */
-    public String appPay(AlipayTradeAppPayRequest request) {
-        try {
-            //这里和普通的接口调用不同，使用的是sdkExecute
-            AlipayTradeAppPayResponse response = alipayClient.sdkExecute(request);
-            LOGGER.info(response.getBody());//就是orderString 可以直接给客户端请求，无需再做处理。
-            return response.getBody();
-        } catch (AlipayApiException e) {
-            LOGGER.error("App支付异常", e);
-            throw new AlipayException(AlipayTradeErrorCode.TRADE_PAY_ERROR.getId(), AlipayTradeErrorCode.TRADE_PAY_ERROR.getMsg());
-        }
+    public String appPay(AlipayTradeAppPayRequest request) throws AlipayApiException {
+        //这里和普通的接口调用不同，使用的是sdkExecute
+        AlipayTradeAppPayResponse response = alipayClient.sdkExecute(request);
+        log.info(response.getBody());//就是orderString 可以直接给客户端请求，无需再做处理。
+        return response.getBody();
     }
 
-    public MonitorHeartbeatSynResponse sendHeartbeat(MonitorHeartbeatSynRequest request) {
-        MonitorHeartbeatSynResponse response = null;
-        try {
-            response = alipayClient.execute(request);
-            LOGGER.info("交易保障数据上传：" + response.getBody());
-        } catch (AlipayApiException e) {
-            LOGGER.error("交易保障数据上传失败：",e);
-            throw new AlipayException(500, "send error");
-        }
-        return response;
+    public MonitorHeartbeatSynResponse sendHeartbeat(MonitorHeartbeatSynRequest request) throws AlipayApiException {
+        return alipayClient.execute(request);
     }
 }
