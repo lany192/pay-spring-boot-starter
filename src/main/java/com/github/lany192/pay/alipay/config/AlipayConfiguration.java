@@ -8,8 +8,6 @@ import com.github.lany192.pay.alipay.service.AlipayTradeService;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,18 +17,21 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @EnableConfigurationProperties(AlipayProperties.class)
-@ConfigurationProperties(prefix = "pay.alipay")
-public class AlipayAutoConfiguration {
+public class AlipayConfiguration {
+    private final AlipayProperties properties;
 
     @Autowired
-    private AlipayProperties properties;
+    public AlipayConfiguration(AlipayProperties properties) {
+        this.properties = properties;
+    }
 
     @Bean
     @ConditionalOnMissingBean
     public AlipayClient alipayClient() {
         byte[] privateKeyBytes = properties.getPrivateKey().getEncoded();
-        byte[] publicKeyBytes = properties.getAlipayPublicKey().getEncoded();
-        return new DefaultAlipayClient(properties.getHost() + "/gateway.do",
+        byte[] publicKeyBytes = properties.getPublicKey().getEncoded();
+        String serverUrl = properties.getHost() + "/gateway.do";
+        return new DefaultAlipayClient(serverUrl,
                 properties.getAppId(),
                 Base64.encodeBase64String(privateKeyBytes),
                 AlipayConstants.FORMAT_JSON,
@@ -40,14 +41,12 @@ public class AlipayAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean
-    public AlipayTradeService alipayTradeService() {
-        return new AlipayTradeService(properties, alipayClient());
+    public AlipayTradeService tradeService(AlipayClient alipayClient) {
+        return new AlipayTradeService(properties, alipayClient);
     }
 
     @Bean
-    @ConditionalOnMissingBean
-    public AlipayAuthService alipayAuthService() {
-        return new AlipayAuthService(properties, alipayClient());
+    public AlipayAuthService authService(AlipayClient alipayClient) {
+        return new AlipayAuthService(properties, alipayClient);
     }
 }

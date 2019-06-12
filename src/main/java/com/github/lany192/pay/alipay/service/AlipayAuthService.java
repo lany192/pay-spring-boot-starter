@@ -118,9 +118,9 @@ public class AlipayAuthService {
     }
 
     public boolean rsaCheckV1(Map<String, String> params) {
-        byte[] alipaypublicKey = properties.getAlipayPublicKey().getEncoded();
+        byte[] publicKey = properties.getPublicKey().getEncoded();
         try {
-            return AlipaySignature.rsaCheckV1(params, Base64.encodeBase64String(alipaypublicKey),
+            return AlipaySignature.rsaCheckV1(params, Base64.encodeBase64String(publicKey),
                     AlipayConstants.CHARSET_UTF8, AlipayConstants.SIGN_TYPE_RSA2);
         } catch (AlipayApiException e) {
             log.error("异步返回结果验签失败", e);

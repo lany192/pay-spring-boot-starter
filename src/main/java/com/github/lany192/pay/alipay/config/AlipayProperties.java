@@ -18,9 +18,12 @@ import java.security.PublicKey;
 
 @Setter
 @Getter
-@ConfigurationProperties(prefix = "alipay")
+@ConfigurationProperties(prefix = "pay.alipay")
 public class AlipayProperties {
-    private String host;
+    private String host = "https://openapi.alipay.com";
+    /**
+     * 支付宝应用id
+     */
     private String appId;
     /**
      * 签约的支付宝账号对应的支付宝唯一用户号
@@ -35,27 +38,31 @@ public class AlipayProperties {
     /**
      * 支付宝公钥
      */
-    private PublicKey alipayPublicKey;
+    private PublicKey publicKey;
+    /**
+     * 支付异步回调通知URL
+     */
+    private String notifyUrl;
 
     public void setPrivateKey(Resource privateKey) throws IOException {
-
         try (PEMParser parser = new PEMParser(new InputStreamReader(privateKey.getInputStream()))) {
             PEMKeyPair pemKeyPair = (PEMKeyPair) parser.readObject();
-            JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter();
-            this.privateKey = keyConverter.getPrivateKey(pemKeyPair.getPrivateKeyInfo());
+            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+            this.privateKey = converter.getPrivateKey(pemKeyPair.getPrivateKeyInfo());
         }
     }
 
-    public void setAlipayPublicKey(Resource alipayPublicKey) throws IOException {
-        try (PEMParser parser = new PEMParser(new InputStreamReader(alipayPublicKey.getInputStream()))) {
+    public void setPublicKey(Resource publicKey) throws IOException {
+        try (PEMParser parser = new PEMParser(new InputStreamReader(publicKey.getInputStream()))) {
             SubjectPublicKeyInfo subjectPublicKeyInfo = (SubjectPublicKeyInfo) parser.readObject();
             JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter();
-            this.alipayPublicKey = keyConverter.getPublicKey(subjectPublicKeyInfo);
+            this.publicKey = keyConverter.getPublicKey(subjectPublicKeyInfo);
         }
     }
 
     @Override
     public String toString() {
-        return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+        return ToStringBuilder.reflectionToString(this,
+                ToStringStyle.MULTI_LINE_STYLE);
     }
 }
