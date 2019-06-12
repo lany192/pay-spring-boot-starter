@@ -2,13 +2,18 @@ package com.github.lany192.pay.alipay.service;
 
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
+import com.alipay.api.AlipayConstants;
 import com.alipay.api.domain.*;
+import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.api.request.*;
 import com.alipay.api.response.*;
 import com.github.lany192.pay.alipay.config.AlipayProperties;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 /**
  * 支付宝交易Service
@@ -28,6 +33,13 @@ public class AlipayTradeService {
     public AlipayProperties getProperties() {
         return properties;
     }
+
+    public boolean rsaCheckV1(Map<String, String> params) throws AlipayApiException {
+        byte[] publicKeyBytes = properties.getPublicKey().getEncoded();
+        return AlipaySignature.rsaCheckV1(params, Base64.encodeBase64String(publicKeyBytes),
+                AlipayConstants.CHARSET_UTF8, AlipayConstants.SIGN_TYPE_RSA2);
+    }
+
 
     /**
      * 支付宝支付
