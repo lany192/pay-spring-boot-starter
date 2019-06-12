@@ -49,9 +49,7 @@ public class WxPayConfiguration {
 
     @Bean
     public WxPayTradeService tradeService(WxPayService wxPayService) {
-        WxPayTradeService service = new WxPayTradeService();
-        service.setWxPayService(wxPayService);
-        return service;
+        return new WxPayTradeService(wxPayService);
     }
 }
 

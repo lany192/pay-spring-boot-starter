@@ -6,6 +6,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * 定义可配置的参数
+ */
 @Setter
 @Getter
 @ConfigurationProperties(prefix = "pay.wxpay")

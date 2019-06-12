@@ -1,140 +1,84 @@
 package com.github.lany192.pay.wechat.service;
 
-import com.github.binarywang.wxpay.bean.request.WxPayMicropayRequest;
-import com.github.binarywang.wxpay.bean.request.WxPayOrderReverseRequest;
 import com.github.binarywang.wxpay.bean.request.WxPayUnifiedOrderRequest;
-import com.github.binarywang.wxpay.bean.result.*;
+import com.github.binarywang.wxpay.bean.result.WxPayUnifiedOrderResult;
+import com.github.binarywang.wxpay.config.WxPayConfig;
+import com.github.binarywang.wxpay.constant.WxPayConstants;
 import com.github.binarywang.wxpay.exception.WxPayException;
 import com.github.binarywang.wxpay.service.WxPayService;
-import com.github.lany192.pay.wechat.enums.MicropayErrorCode;
+import com.github.binarywang.wxpay.util.SignUtils;
+import com.github.lany192.pay.wechat.utils.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
- * @author Lany
+ * 交易服务,WxPayService的二次封装
  */
 @Slf4j
+@Service
 public class WxPayTradeService {
     private WxPayService wxPayService;
 
-    public void setWxPayService(WxPayService wxPayService) {
+    @Autowired
+    public WxPayTradeService(WxPayService wxPayService) {
         this.wxPayService = wxPayService;
     }
 
     /**
-     * 发送micropay支付接口
-     */
-    public WxPayMicropayResult micropay(WxPayMicropayRequest request) {
-        WxPayMicropayResult result = null;
-        try {
-            result = wxPayService.micropay(request);
-        } catch (WxPayException e) {
-            log.info("微信订单支付异常-OutTradeNo: {}", request.getOutTradeNo());
-            String errCode = e.getErrCode();
-
-            WxPayMicropayResult exceptionResult = new WxPayMicropayResult();
-            exceptionResult.setErrCode(errCode);
-            exceptionResult.setOutTradeNo(request.getOutTradeNo());
-
-            if (!MicropayErrorCode.contains(errCode)) {
-//                paymentCallbackHandler.onPaymentFailure(exceptionResult);
-                return exceptionResult;
-            }
-
-            MicropayErrorCode errorCode = MicropayErrorCode.valueOf(errCode);
-            //未知错误
-            if (errorCode.isOrderQueryRequired()) {
-//                paymentCallbackHandler.onPaymentUnknown(exceptionResult);
-            } else {
-                //支付失败
-//                paymentCallbackHandler.onPaymentFailure(exceptionResult);
-            }
-            return exceptionResult;
-        }
-
-        // 判断第二级返回结果无逻辑错误支付成功
-        if (StringUtils.isBlank(result.getErrCode())) {
-            log.info("微信订单支付成功-OutTradeNo: {}", result.getOutTradeNo());
-//            paymentCallbackHandler.onPaymentSuccess(result);
-        }
-        return result;
-    }
-
-    /**
-     * 微信刷卡支付查询订单状态
-     *
-     * @param transactionId
-     * @param outTradeNo    商户订单号
-     * @return WxPayOrderQueryResult
-     */
-    public WxPayOrderQueryResult queryOrder(String transactionId, String outTradeNo) {
-        try {
-            return wxPayService.queryOrder(transactionId, outTradeNo);
-        } catch (WxPayException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * 关闭微信订单
-     */
-    public WxPayOrderCloseResult closeOrder(String outTradeNo) {
-        try {
-            return wxPayService.closeOrder(outTradeNo);
-        } catch (WxPayException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * 撤销订单
-     *
-     * @param request
-     * @return
-     */
-    public WxPayOrderReverseResult reverseOrder(WxPayOrderReverseRequest request) {
-        try {
-            return wxPayService.reverseOrder(request);
-        } catch (WxPayException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
      * 统一下单
-     *
-     * @param request
-     * @return
      */
-    public WxPayUnifiedOrderResult unifiedOrder(WxPayUnifiedOrderRequest request) {
-        try {
-            return wxPayService.unifiedOrder(request);
-        } catch (WxPayException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+    public Map<String, String> unifiedOrder(WxPayUnifiedOrderRequest request) throws WxPayException {
+        /**
+         * 30分钟后失效
+         */
+        Date startDate = new Date();
+        request.setTimeStart(TimeUtils.getTimeStart(startDate));
+        request.setTimeExpire(TimeUtils.getTimeExpire(startDate, 30));
 
-    /**
-     * 下载账单
-     *
-     * @param billDate   对账单日期 bill_date	下载对账单的日期，格式：20140603
-     * @param billType   账单类型	bill_type	ALL，返回当日所有订单信息，默认值，SUCCESS，返回当日成功支付的订单，REFUND，返回当日退款订单
-     * @param tarType    压缩账单	tar_type	非必传参数，固定值：GZIP，返回格式为.gzip的压缩包账单。不传则默认为数据流形式。
-     * @param deviceInfo 设备号	device_info	非必传参数，终端设备号
-     * @return
-     */
-    public WxPayBillResult downloadBill(String billDate, String billType, String tarType, String deviceInfo) {
-        try {
-            return wxPayService.downloadBill(billDate, billType, tarType, deviceInfo);
-        } catch (WxPayException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+        WxPayUnifiedOrderResult unifiedOrderResult = wxPayService.unifiedOrder(request);
+        String prepayId = unifiedOrderResult.getPrepayId();
+        if (StringUtils.isBlank(prepayId)) {
+            throw new RuntimeException(String.format("无法获取prepay id，错误代码： '%s'，信息：%s。", unifiedOrderResult.getErrCode(), unifiedOrderResult.getErrCodeDes()));
+        } else {
+            String timestamp = String.valueOf(System.currentTimeMillis() / 1000L);
+            String nonceStr = UUID.randomUUID().toString().replace("-", "");
+            WxPayConfig config = wxPayService.getConfig();
+            Map<String, String> payInfo = new HashMap<>();
+            if (WxPayConstants.TradeType.NATIVE.equals(request.getTradeType())) {
+                payInfo.put("codeUrl", unifiedOrderResult.getCodeURL());
+            } else if (WxPayConstants.TradeType.APP.equals(request.getTradeType())) {
+                Map<String, String> configMap = new HashMap<>();
+                configMap.put("prepayid", prepayId);
+                configMap.put("partnerid", config.getMchId());
+                configMap.put("package", "Sign=WXPay");
+                configMap.put("timestamp", timestamp);
+                configMap.put("noncestr", nonceStr);
+                configMap.put("appid", config.getAppId());
 
+                payInfo.put("sign", SignUtils.createSign(configMap, request.getSignType(), config.getMchKey(), null));
+                payInfo.put("prepayId", prepayId);
+                payInfo.put("partnerId", config.getMchId());
+                payInfo.put("appId", config.getAppId());
+                payInfo.put("packageValue", "Sign=WXPay");
+                payInfo.put("timeStamp", timestamp);
+                payInfo.put("nonceStr", nonceStr);
+            } else if (WxPayConstants.TradeType.JSAPI.equals(request.getTradeType())) {
+                payInfo.put("appId", unifiedOrderResult.getAppid());
+                payInfo.put("timeStamp", timestamp);
+                payInfo.put("nonceStr", nonceStr);
+                payInfo.put("package", "prepay_id=" + prepayId);
+                payInfo.put("signType", request.getSignType());
+                payInfo.put("paySign", SignUtils.createSign(payInfo, request.getSignType(), config.getMchKey(), null));
+            }
+            return payInfo;
+        }
+    }
 }
 
