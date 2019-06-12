@@ -35,8 +35,7 @@ public class AlipayTradeService {
     }
 
     public boolean rsaCheckV1(Map<String, String> params) throws AlipayApiException {
-        byte[] publicKeyBytes = properties.getPublicKey().getEncoded();
-        return AlipaySignature.rsaCheckV1(params, Base64.encodeBase64String(publicKeyBytes),
+        return AlipaySignature.rsaCheckV1(params, properties.getPublicKey(),
                 AlipayConstants.CHARSET_UTF8, AlipayConstants.SIGN_TYPE_RSA2);
     }
 

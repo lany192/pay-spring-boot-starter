@@ -28,7 +28,7 @@ public class WxPayConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public WxPayConfig config() {
+    public WxPayConfig wxPayConfig() {
         WxPayConfig config = new WxPayConfig();
         config.setAppId(StringUtils.trimToNull(properties.getAppId()));
         config.setMchId(StringUtils.trimToNull(properties.getMchId()));
@@ -48,7 +48,7 @@ public class WxPayConfiguration {
     }
 
     @Bean
-    public WxPayTradeService tradeService(WxPayService wxPayService) {
+    public WxPayTradeService wxPayTradeService(WxPayService wxPayService) {
         return new WxPayTradeService(wxPayService);
     }
 }

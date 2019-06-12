@@ -4,17 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.core.io.Resource;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 
 @Setter
 @Getter
@@ -33,32 +23,16 @@ public class AlipayProperties {
     /**
      * 应用私钥
      */
-    private PrivateKey privateKey;
+    private String privateKey;
 
     /**
      * 支付宝公钥
      */
-    private PublicKey publicKey;
+    private String publicKey;
     /**
      * 支付异步回调通知URL
      */
     private String notifyUrl;
-
-    public void setPrivateKey(Resource privateKey) throws IOException {
-        try (PEMParser parser = new PEMParser(new InputStreamReader(privateKey.getInputStream()))) {
-            PEMKeyPair pemKeyPair = (PEMKeyPair) parser.readObject();
-            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-            this.privateKey = converter.getPrivateKey(pemKeyPair.getPrivateKeyInfo());
-        }
-    }
-
-    public void setPublicKey(Resource publicKey) throws IOException {
-        try (PEMParser parser = new PEMParser(new InputStreamReader(publicKey.getInputStream()))) {
-            SubjectPublicKeyInfo subjectPublicKeyInfo = (SubjectPublicKeyInfo) parser.readObject();
-            JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter();
-            this.publicKey = keyConverter.getPublicKey(subjectPublicKeyInfo);
-        }
-    }
 
     @Override
     public String toString() {

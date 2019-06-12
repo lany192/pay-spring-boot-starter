@@ -10,9 +10,6 @@ import com.alipay.api.response.AlipaySystemOauthTokenResponse;
 import com.alipay.api.response.AlipayUserUserinfoShareResponse;
 import com.github.lany192.pay.alipay.config.AlipayProperties;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base64;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -26,12 +23,10 @@ import java.util.Map;
  * @author Administrator
  */
 @Slf4j
-@Service
 public class AlipayAuthService {
     private final AlipayProperties properties;
     private final AlipayClient alipayClient;
 
-    @Autowired
     public AlipayAuthService(AlipayProperties properties, AlipayClient alipayClient) {
         this.properties = properties;
         this.alipayClient = alipayClient;
@@ -106,8 +101,7 @@ public class AlipayAuthService {
         // 签名类型
         params.put("sign_type", AlipayConstants.SIGN_TYPE_RSA2);
 
-        byte[] privateKeyBytes = properties.getPrivateKey().getEncoded();
-        String sign = AlipaySignature.rsaSign(AlipaySignature.getSignContent(params), Base64.encodeBase64String(privateKeyBytes),
+        String sign = AlipaySignature.rsaSign(AlipaySignature.getSignContent(params), properties.getPrivateKey(),
                 AlipayConstants.CHARSET_UTF8, AlipayConstants.SIGN_TYPE_RSA2);
         try {
             return AlipaySignature.getSignContent(params) + "&sign=" + URLEncoder.encode(sign, "UTF-8");
@@ -115,17 +109,6 @@ public class AlipayAuthService {
             e.printStackTrace();
         }
         return "";
-    }
-
-    public boolean rsaCheckV1(Map<String, String> params) {
-        byte[] publicKey = properties.getPublicKey().getEncoded();
-        try {
-            return AlipaySignature.rsaCheckV1(params, Base64.encodeBase64String(publicKey),
-                    AlipayConstants.CHARSET_UTF8, AlipayConstants.SIGN_TYPE_RSA2);
-        } catch (AlipayApiException e) {
-            log.error("异步返回结果验签失败", e);
-        }
-        return false;
     }
 }
 
