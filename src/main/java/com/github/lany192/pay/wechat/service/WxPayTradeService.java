@@ -14,8 +14,12 @@ import org.apache.commons.lang3.StringUtils;
  * @author Lany
  */
 @Slf4j
-public class WechatTradeService {
+public class WxPayTradeService {
     private WxPayService wxPayService;
+
+    public void setWxPayService(WxPayService wxPayService) {
+        this.wxPayService = wxPayService;
+    }
 
     /**
      * 发送micropay支付接口
@@ -132,8 +136,5 @@ public class WechatTradeService {
         return null;
     }
 
-    public void setWxPayService(WxPayService wxPayService) {
-        this.wxPayService = wxPayService;
-    }
 }
 

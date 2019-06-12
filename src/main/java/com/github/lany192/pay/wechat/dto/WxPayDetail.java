@@ -3,13 +3,9 @@ package com.github.lany192.pay.wechat.dto;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * @author Lany
- * @date 2018/3/29
- */
 @Setter
 @Getter
-public class WxPayGoodsDetail {
+public class WxPayDetail {
 
     /**
      * 必填 32 商品的编号
@@ -24,12 +20,12 @@ public class WxPayGoodsDetail {
     /**
      * 必填 256 商品名称
      */
-    private String goodsName;
+    private String name;
 
     /**
      * 必填 商品数量
      */
-    private Integer goodsNum;
+    private Integer number;
 
     /**
      * 必填 商品单价，单位为分
