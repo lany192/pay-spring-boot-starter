@@ -3,7 +3,6 @@ package com.github.lany192.pay.wechat.config;
 import com.github.binarywang.wxpay.config.WxPayConfig;
 import com.github.binarywang.wxpay.service.WxPayService;
 import com.github.binarywang.wxpay.service.impl.WxPayServiceImpl;
-import com.github.lany192.pay.wechat.service.WxPayTradeService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -27,7 +26,7 @@ public class WxPayConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(WxPayConfig.class)
     public WxPayConfig wxPayConfig() {
         WxPayConfig config = new WxPayConfig();
         config.setAppId(StringUtils.trimToNull(properties.getAppId()));
@@ -41,15 +40,11 @@ public class WxPayConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean(WxPayService.class)
     public WxPayService wxPayService(WxPayConfig payConfig) {
         WxPayService service = new WxPayServiceImpl();
         service.setConfig(payConfig);
         return service;
-    }
-
-    @Bean
-    public WxPayTradeService wxPayTradeService(WxPayService wxPayService) {
-        return new WxPayTradeService(wxPayService);
     }
 }
 
