@@ -45,14 +45,14 @@
         <dependency>
             <groupId>com.github.binarywang</groupId>
             <artifactId>weixin-java-pay</artifactId>
-            <version>3.4.0</version>
+            <version>3.5.0</version>
         </dependency>
         <!-- 微信支付SDK end -->
         <!-- 微信登录授权sdk start -->
         <dependency>
             <groupId>com.github.binarywang</groupId>
             <artifactId>weixin-java-mp</artifactId>
-            <version>3.4.0</version>
+            <version>3.5.0</version>
         </dependency>
         <!-- 微信登录授权sdk end -->
 
@@ -65,7 +65,7 @@
         <dependency>
             <groupId>com.alipay.sdk</groupId>
             <artifactId>alipay-sdk-java</artifactId>
-            <version>3.7.73.ALL</version>
+            <version>4.5.0.ALL</version>
         </dependency>
         <dependency>
             <groupId>commons-logging</groupId>
