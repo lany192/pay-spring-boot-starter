@@ -9,7 +9,6 @@ import com.alipay.api.request.*;
 import com.alipay.api.response.*;
 import com.github.lany192.pay.alipay.config.AlipayProperties;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

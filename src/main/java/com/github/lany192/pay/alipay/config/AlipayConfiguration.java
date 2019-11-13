@@ -38,11 +38,13 @@ public class AlipayConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public AlipayTradeService alipayTradeService(AlipayClient alipayClient) {
         return new AlipayTradeService(properties, alipayClient);
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public AlipayAuthService alipayAuthService(AlipayClient alipayClient) {
         return new AlipayAuthService(properties, alipayClient);
     }
